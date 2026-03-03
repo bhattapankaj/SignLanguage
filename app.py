@@ -380,6 +380,30 @@ def inject_css() -> None:
             border-color: rgba(139,92,246,0.6) !important;
             background: rgba(139,92,246,0.04) !important;
         }
+
+        /* ── Predict button ── */
+        div[data-testid="stButton"] > button {
+            width: 100%;
+            padding: 0.85rem 2rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            color: #ffffff;
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 24px rgba(124,58,237,0.35);
+        }
+        div[data-testid="stButton"] > button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 32px rgba(124,58,237,0.5);
+        }
+        div[data-testid="stButton"] > button:active {
+            transform: translateY(0px);
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -619,21 +643,43 @@ def main() -> None:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Three-column result layout ────────────────────────────────────────
-    col_orig, col_pre, col_res = st.columns([2, 2, 3], gap="medium")
+    # ── Preview + button (always shown after upload) ──────────────────────
+    prev_col, btn_col = st.columns([3, 1], gap="medium")
+    with prev_col:
+        st.markdown("<div class='panel-label'>📷 &nbsp;Image ready — click Predict to analyse</div>",
+                    unsafe_allow_html=True)
+        st.image(Image.open(uploaded), width=220)
 
-    with col_orig:
-        st.markdown("<div class='panel'>", unsafe_allow_html=True)
-        st.markdown("<div class='panel-label'>📷 &nbsp;Original</div>", unsafe_allow_html=True)
-        st.image(Image.open(uploaded), use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+    with btn_col:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        run = st.button("✦  Predict Sign", use_container_width=True)
 
+    if not run:
+        _render_sidebar(model_label, best_acc)
+        return
+
+    # ── Run prediction ────────────────────────────────────────────────────
     uploaded.seek(0)
     try:
         tensor, img_28 = preprocess_image(uploaded, model_label)
     except ValueError as e:
         st.error(str(e))
         st.stop()
+
+    letter, confidence, probs = predict(model, tensor, device)
+    bar_w = int(confidence * 100)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Three-column result layout ────────────────────────────────────────
+    col_orig, col_pre, col_res = st.columns([2, 2, 3], gap="medium")
+
+    with col_orig:
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
+        st.markdown("<div class='panel-label'>📷 &nbsp;Original</div>", unsafe_allow_html=True)
+        uploaded.seek(0)
+        st.image(Image.open(uploaded), use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col_pre:
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
@@ -644,9 +690,6 @@ def main() -> None:
             unsafe_allow_html=True,
         )
         st.markdown("</div>", unsafe_allow_html=True)
-
-    letter, confidence, probs = predict(model, tensor, device)
-    bar_w = int(confidence * 100)
 
     with col_res:
         st.markdown(
