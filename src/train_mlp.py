@@ -17,6 +17,8 @@ import os
 import time
 from typing import Tuple
 
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -59,7 +61,7 @@ def run_epoch(
     loader: torch.utils.data.DataLoader,
     criterion: nn.Module,
     device: torch.device,
-    optimiser: optim.Optimizer | None = None,
+    optimiser: Optional[optim.Optimizer] = None,
 ) -> Tuple[float, float]:
     """
     Single forward (and optionally backward) pass over *loader*.
