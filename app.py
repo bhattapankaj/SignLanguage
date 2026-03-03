@@ -20,6 +20,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -503,6 +504,26 @@ def predict(model: nn.Module, tensor: torch.Tensor, device: torch.device):
     return LABEL_TO_LETTER[idx], probs[idx].item(), probs.tolist()
 
 
+def speak_letter(letter: str) -> None:
+    """Use the browser's Web Speech API to pronounce the predicted letter."""
+    components.html(
+        f"""
+        <script>
+        (function() {{
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            var u = new SpeechSynthesisUtterance("{letter}");
+            u.rate  = 0.85;
+            u.pitch = 1.0;
+            u.volume = 1.0;
+            window.speechSynthesis.speak(u);
+        }})();
+        </script>
+        """,
+        height=0,
+    )
+
+
 # ------------------------------------------------------------------ UI helpers
 
 def _top5_bars(probs: list) -> None:
@@ -653,6 +674,11 @@ def main() -> None:
     with btn_col:
         st.markdown("<br><br>", unsafe_allow_html=True)
         run = st.button("✦  Predict Sign", use_container_width=True)
+        muted = st.session_state.get("muted", False)
+        mute_label = "🔇  Mute Audio" if not muted else "🔊  Unmute Audio"
+        if st.button(mute_label, use_container_width=True):
+            st.session_state["muted"] = not muted
+            st.rerun()
 
     if not run:
         _render_sidebar(model_label, best_acc)
@@ -668,6 +694,10 @@ def main() -> None:
 
     letter, confidence, probs = predict(model, tensor, device)
     bar_w = int(confidence * 100)
+
+    # Speak the letter unless muted
+    if not st.session_state.get("muted", False):
+        speak_letter(letter)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
