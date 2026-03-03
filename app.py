@@ -9,6 +9,7 @@ Run:
     streamlit run app.py
 """
 
+import io
 import os
 import sys
 
@@ -38,150 +39,347 @@ def inject_css() -> None:
     st.markdown(
         """
         <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
         /* ── Hide Streamlit chrome ── */
         #MainMenu, footer, header { visibility: hidden; }
 
-        /* ── Global font & background ── */
+        /* ── Global ── */
         html, body, [class*="css"] {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0f;
+        }
+        .block-container {
+            padding-top: 5rem !important;
+            padding-bottom: 3rem !important;
+            max-width: 1200px;
         }
 
-        /* ── Top navbar ── */
+        /* ── Navbar ── */
         .navbar {
             position: fixed;
-            top: 0;
-            left: 0;
+            top: 0; left: 0;
             width: 100%;
             z-index: 9999;
-            background: #0e0e0e;
-            border-bottom: 1px solid #222;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.15);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 2rem;
-            height: 52px;
+            padding: 0 2.5rem;
+            height: 56px;
         }
         .navbar-brand {
-            font-size: 0.95rem;
-            font-weight: 600;
-            letter-spacing: 0.08em;
-            color: #ffffff;
-            text-transform: uppercase;
-        }
-        .navbar-links {
-            display: flex;
-            gap: 2rem;
-        }
-        .navbar-links a {
-            font-size: 0.78rem;
-            font-weight: 500;
-            color: #888;
-            text-decoration: none;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            transition: color 0.2s;
-        }
-        .navbar-links a:hover { color: #fff; }
-        .navbar-badge {
-            font-size: 0.7rem;
-            font-weight: 500;
-            color: #555;
+            font-size: 1rem;
+            font-weight: 700;
             letter-spacing: 0.04em;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .navbar-pill {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #a78bfa;
+            background: rgba(139, 92, 246, 0.12);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            padding: 0.25rem 0.75rem;
+            letter-spacing: 0.05em;
         }
 
-        /* ── Push content below navbar ── */
-        .block-container { padding-top: 4.5rem !important; }
-
-        /* ── Section label ── */
-        .section-label {
-            font-size: 0.68rem;
+        /* ── Hero ── */
+        .hero {
+            text-align: center;
+            padding: 2.5rem 1rem 2rem;
+        }
+        .hero-badge {
+            display: inline-block;
+            font-size: 0.7rem;
             font-weight: 600;
             letter-spacing: 0.12em;
             text-transform: uppercase;
-            color: #555;
-            margin-bottom: 0.4rem;
+            color: #a78bfa;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            border-radius: 20px;
+            padding: 0.3rem 1rem;
+            margin-bottom: 1.2rem;
+        }
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #ffffff 0%, #a78bfa 50%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.8rem;
+        }
+        .hero-sub {
+            font-size: 1rem;
+            color: #6b7280;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
         }
 
-        /* ── Stat card ── */
+        /* ── Stat cards ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
         .stat-card {
-            background: #141414;
-            border: 1px solid #1f1f1f;
-            border-radius: 6px;
-            padding: 1rem 1.2rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 1.2rem;
             text-align: center;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .stat-card:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+            background: rgba(139, 92, 246, 0.05);
+        }
+        .stat-icon {
+            font-size: 1.4rem;
+            margin-bottom: 0.4rem;
         }
         .stat-label {
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: #555;
+            color: #4b5563;
             margin-bottom: 0.3rem;
         }
         .stat-value {
             font-size: 1.1rem;
-            font-weight: 600;
-            color: #e8e8e8;
-        }
-
-        /* ── Prediction result ── */
-        .result-letter {
-            font-size: 7rem;
             font-weight: 700;
-            color: #ffffff;
-            line-height: 1;
-            letter-spacing: -0.02em;
+            color: #e5e7eb;
         }
-        .result-meta {
-            font-size: 0.72rem;
-            letter-spacing: 0.08em;
+        .stat-value.accent { color: #a78bfa; }
+
+        /* ── Upload zone ── */
+        .upload-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            color: #555;
+            color: #6b7280;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .upload-hint {
+            font-size: 0.8rem;
+            color: #374151;
             margin-top: 0.5rem;
         }
-        .confidence-bar-bg {
-            background: #1a1a1a;
-            border-radius: 3px;
-            height: 4px;
-            width: 100%;
-            margin-top: 0.6rem;
+
+        /* ── Panel (image + result boxes) ── */
+        .panel {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 1.5rem;
+            height: 100%;
         }
-        .confidence-bar-fill {
-            background: #ffffff;
-            border-radius: 3px;
-            height: 4px;
+        .panel-label {
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #4b5563;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .panel-caption {
+            font-size: 0.65rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #374151;
+            margin-top: 0.6rem;
+            text-align: center;
         }
 
-        /* ── Divider ── */
-        hr { border-color: #1f1f1f !important; }
+        /* ── Result ── */
+        .result-wrapper {
+            background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(96,165,250,0.05));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+        }
+        .result-letter {
+            font-size: 8rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #ffffff, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .result-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #6b7280;
+            margin-top: 0.2rem;
+        }
+        .confidence-pct {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #a78bfa;
+            margin-top: 1rem;
+        }
+        .confidence-label {
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #4b5563;
+        }
+        .conf-bar-bg {
+            background: rgba(255,255,255,0.05);
+            border-radius: 99px;
+            height: 6px;
+            width: 100%;
+            margin-top: 0.6rem;
+            overflow: hidden;
+        }
+        .conf-bar-fill {
+            height: 6px;
+            border-radius: 99px;
+            background: linear-gradient(90deg, #7c3aed, #a78bfa, #60a5fa);
+            transition: width 0.6s ease;
+        }
+
+        /* ── Top-5 bars ── */
+        .top5-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.5rem;
+        }
+        .top5-letter {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #e5e7eb;
+            width: 1.2rem;
+            text-align: center;
+        }
+        .top5-bar-bg {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border-radius: 99px;
+            height: 5px;
+            overflow: hidden;
+        }
+        .top5-bar-fill {
+            height: 5px;
+            border-radius: 99px;
+        }
+        .top5-pct {
+            font-size: 0.72rem;
+            color: #6b7280;
+            width: 3.5rem;
+            text-align: right;
+        }
+        .top5-winner .top5-letter { color: #a78bfa; }
+        .top5-winner .top5-pct    { color: #a78bfa; }
+
+        /* ── Section header ── */
+        .section-header {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #4b5563;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
 
         /* ── Warning banner ── */
         .warn-banner {
-            background: #1a1500;
-            border: 1px solid #332800;
-            border-radius: 6px;
-            padding: 0.6rem 1rem;
+            background: rgba(234,179,8,0.08);
+            border: 1px solid rgba(234,179,8,0.2);
+            border-radius: 10px;
+            padding: 0.7rem 1rem;
             font-size: 0.78rem;
-            color: #a08a3a;
-            margin-bottom: 1rem;
-        }
-
-        /* ── Image caption ── */
-        .img-caption {
-            font-size: 0.65rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: #444;
-            margin-top: 0.4rem;
-            text-align: center;
+            color: #ca8a04;
+            margin-bottom: 1.5rem;
         }
 
         /* ── Sidebar ── */
         [data-testid="stSidebar"] {
-            background: #0e0e0e;
-            border-right: 1px solid #1f1f1f;
+            background: #0a0a0f !important;
+            border-right: 1px solid rgba(255,255,255,0.05) !important;
         }
-        [data-testid="stSidebar"] * { color: #777 !important; }
-        [data-testid="stSidebar"] strong { color: #aaa !important; }
+        .sidebar-title {
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #a78bfa;
+            margin-bottom: 1rem;
+        }
+        .sidebar-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .sidebar-key {
+            font-size: 0.72rem;
+            color: #4b5563;
+        }
+        .sidebar-val {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #9ca3af;
+        }
+        .letter-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.3rem;
+            margin-top: 0.6rem;
+        }
+        .letter-chip {
+            background: rgba(139,92,246,0.08);
+            border: 1px solid rgba(139,92,246,0.15);
+            border-radius: 6px;
+            text-align: center;
+            padding: 0.25rem 0;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #7c3aed;
+        }
+
+        /* ── Divider ── */
+        hr { border-color: rgba(255,255,255,0.05) !important; }
+
+        /* Streamlit file uploader tweaks */
+        [data-testid="stFileUploader"] {
+            background: rgba(255,255,255,0.02) !important;
+            border: 1.5px dashed rgba(139,92,246,0.3) !important;
+            border-radius: 14px !important;
+        }
+        [data-testid="stFileUploader"]:hover {
+            border-color: rgba(139,92,246,0.6) !important;
+            background: rgba(139,92,246,0.04) !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -192,12 +390,8 @@ def navbar(model_label: str) -> None:
     st.markdown(
         f"""
         <div class="navbar">
-            <span class="navbar-brand">Sign Language MNIST</span>
-            <div class="navbar-links">
-                <a href="#predict">Predict</a>
-                <a href="#about">About</a>
-            </div>
-            <span class="navbar-badge">{model_label} &nbsp;|&nbsp; A-Y excl. J</span>
+            <span class="navbar-brand">✦ Sign Language AI</span>
+            <span class="navbar-pill">{model_label} · 24 classes</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -207,7 +401,7 @@ def navbar(model_label: str) -> None:
 # ------------------------------------------------------------------ model loading
 
 @st.cache_resource(show_spinner="Loading model...")
-def load_model() -> tuple[nn.Module, torch.device, str]:
+def load_model():
     if os.path.exists(CNN_PATH):
         path, model_label = CNN_PATH, "ConvNet"
     elif os.path.exists(MLP_PATH):
@@ -216,7 +410,7 @@ def load_model() -> tuple[nn.Module, torch.device, str]:
         return None, None, None
 
     checkpoint = torch.load(path, map_location="cpu", weights_only=False)
-    model_type = checkpoint.get("model_type", "mlp")
+    model_type  = checkpoint.get("model_type", "mlp")
     dropout     = checkpoint.get("dropout", 0.25)
     num_classes = checkpoint.get("num_classes", NUM_CLASSES)
 
@@ -254,28 +448,23 @@ def _crop_hand(img_grey: np.ndarray, pad_frac: float = 0.15) -> np.ndarray:
     return cropped if cropped.size > 0 else img_grey
 
 
-def preprocess_image(uploaded_file, model_type: str) -> tuple[torch.Tensor, np.ndarray]:
+def preprocess_image(uploaded_file, model_type: str):
     raw = uploaded_file.read()
-
-    # Try OpenCV first; fall back to Pillow for formats like AVIF/WEBP
-    # that older OpenCV builds may not support
     file_bytes = np.frombuffer(raw, dtype=np.uint8)
     img_bgr = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
     if img_bgr is None:
         try:
-            import io
             pil_img = Image.open(io.BytesIO(raw)).convert("RGB")
             img_bgr = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
         except Exception:
-            raise ValueError(
-                "Could not decode the image. "
-                "Please upload a valid PNG, JPG, WEBP, or AVIF file."
-            )
-    img_grey  = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-    img_grey  = _crop_hand(img_grey)
+            raise ValueError("Could not decode image. Please upload PNG, JPG, WEBP, or AVIF.")
+
+    img_grey   = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+    img_grey   = _crop_hand(img_grey)
     img_resized = cv2.resize(img_grey, (IMAGE_SIZE, IMAGE_SIZE), interpolation=cv2.INTER_AREA)
-    img_norm  = img_resized.astype(np.float32) / 255.0
+    img_norm   = img_resized.astype(np.float32) / 255.0
+
     if model_type == "ConvNet":
         tensor = torch.from_numpy(img_norm).unsqueeze(0).unsqueeze(0)
     else:
@@ -290,66 +479,130 @@ def predict(model: nn.Module, tensor: torch.Tensor, device: torch.device):
     return LABEL_TO_LETTER[idx], probs[idx].item(), probs.tolist()
 
 
-# ------------------------------------------------------------------ UI
+# ------------------------------------------------------------------ UI helpers
+
+def _top5_bars(probs: list) -> None:
+    top5 = sorted(range(len(probs)), key=lambda i: probs[i], reverse=True)[:5]
+    max_p = probs[top5[0]]
+    colors = ["#a78bfa", "#818cf8", "#60a5fa", "#38bdf8", "#34d399"]
+    html = ""
+    for rank, idx in enumerate(top5):
+        letter = LABEL_TO_LETTER[idx]
+        pct    = probs[idx] * 100
+        bar_w  = int(pct / max_p * 100) if max_p > 0 else 0
+        winner = "top5-winner" if rank == 0 else ""
+        html += f"""
+        <div class="top5-row {winner}">
+            <span class="top5-letter">{letter}</span>
+            <div class="top5-bar-bg">
+                <div class="top5-bar-fill" style="width:{bar_w}%;background:{colors[rank]};"></div>
+            </div>
+            <span class="top5-pct">{pct:.1f}%</span>
+        </div>"""
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def _render_sidebar(model_label: str, best_acc) -> None:
+    with st.sidebar:
+        st.markdown("<div class='sidebar-title'>Model Info</div>", unsafe_allow_html=True)
+        rows = [
+            ("Dataset",    "Sign Language MNIST"),
+            ("Model",      model_label or "—"),
+            ("Accuracy",   f"{best_acc*100:.1f}%" if best_acc else "N/A"),
+            ("Classes",    "24  (A–Y, excl. J & Z)"),
+            ("Input",      "28 × 28 greyscale"),
+            ("Framework",  "PyTorch"),
+        ]
+        html = ""
+        for k, v in rows:
+            html += f"""<div class='sidebar-row'>
+                <span class='sidebar-key'>{k}</span>
+                <span class='sidebar-val'>{v}</span>
+            </div>"""
+        st.markdown(html, unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<div class='sidebar-title'>Supported Letters</div>", unsafe_allow_html=True)
+        chips = "".join(f"<div class='letter-chip'>{l}</div>" for l in ALL_LETTERS)
+        st.markdown(f"<div class='letter-grid'>{chips}</div>", unsafe_allow_html=True)
+
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown(
+            "<p style='font-size:0.62rem;color:#374151;line-height:1.6;'>"
+            "For best results: plain background, hand centered, good lighting."
+            "</p>",
+            unsafe_allow_html=True,
+        )
+
+
+# ------------------------------------------------------------------ main
 
 def main() -> None:
     st.set_page_config(
-        page_title="Sign Language MNIST",
-        page_icon=None,
+        page_title="Sign Language AI",
+        page_icon="✦",
         layout="wide",
     )
 
     inject_css()
-
     model, device, model_label = load_model()
-
-    # Navbar (needs model_label; show placeholder if model missing)
     navbar(model_label or "No model")
 
     if model is None:
-        st.error(
-            "No trained model found. "
-            "Run `python -m src.train_cnn` to train the CNN model."
-        )
+        st.error("No trained model found. Run `python -m src.train_cnn` first.")
         st.stop()
 
     ckpt_path = CNN_PATH if model_label == "ConvNet" else MLP_PATH
-    ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    ckpt      = torch.load(ckpt_path, map_location="cpu", weights_only=False)
     best_epoch = ckpt.get("epoch", "—")
     best_acc   = ckpt.get("val_accuracy", None)
-    input_fmt  = "1 x 28 x 28" if model_label == "ConvNet" else "784-dim vector"
+    input_fmt  = "1 × 28 × 28" if model_label == "ConvNet" else "784-dim vector"
 
-    # ── Stats row ──────────────────────────────────────────────────────
-    c1, c2, c3, c4 = st.columns(4)
-    cards = [
-        ("Architecture", model_label),
-        ("Best Epoch",   str(best_epoch)),
-        ("Val Accuracy", f"{best_acc * 100:.1f}%" if best_acc else "N/A"),
-        ("Input Format", input_fmt),
-    ]
-    for col, (label, value) in zip([c1, c2, c3, c4], cards):
+    # ── Hero ────────────────────────────────────────────────────────────
+    st.markdown(
+        """
+        <div class="hero">
+            <div class="hero-badge">✦ AI-Powered Sign Recognition</div>
+            <div class="hero-title">Read the Signs</div>
+            <p class="hero-sub">Upload a photo of an ASL hand sign and get an instant letter prediction powered by a trained ConvNet.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # ── Stats row ────────────────────────────────────────────────────────
+    icons  = ["🧠", "🏆", "📐", "⚡"]
+    labels = ["Architecture", "Best Epoch", "Val Accuracy", "Input Format"]
+    values = [model_label, str(best_epoch),
+              f"{best_acc*100:.1f}%" if best_acc else "N/A", input_fmt]
+    accents = [False, False, True, False]
+
+    cols = st.columns(4)
+    for col, icon, label, value, is_accent in zip(cols, icons, labels, values, accents):
+        accent_cls = "accent" if is_accent else ""
         col.markdown(
             f"<div class='stat-card'>"
+            f"<div class='stat-icon'>{icon}</div>"
             f"<div class='stat-label'>{label}</div>"
-            f"<div class='stat-value'>{value}</div>"
+            f"<div class='stat-value {accent_cls}'>{value}</div>"
             f"</div>",
             unsafe_allow_html=True,
         )
 
     if model_label == "MLP":
         st.markdown(
-            "<div class='warn-banner'>"
-            "MLP model active. Train the CNN for higher accuracy: "
-            "<code>python -m src.train_cnn</code>"
-            "</div>",
+            "<div class='warn-banner'>⚠ MLP model active — train the CNN for higher accuracy: "
+            "<code>python -m src.train_cnn</code></div>",
             unsafe_allow_html=True,
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Upload ─────────────────────────────────────────────────────────
-    st.markdown("<div class='section-label' id='predict'>Upload Image</div>",
-                unsafe_allow_html=True)
+    # ── Upload ───────────────────────────────────────────────────────────
+    st.markdown(
+        "<div class='upload-label'>📁 &nbsp;Drop your hand sign image</div>",
+        unsafe_allow_html=True,
+    )
     uploaded = st.file_uploader(
         label="upload",
         type=["png", "jpg", "jpeg", "webp", "avif"],
@@ -358,21 +611,22 @@ def main() -> None:
 
     if uploaded is None:
         st.markdown(
-            "<p style='color:#444; font-size:0.82rem; margin-top:0.5rem;'>"
-            "Accepted formats: PNG, JPG, JPEG, WEBP, AVIF — hand sign against a plain background."
-            "</p>",
+            "<p class='upload-hint'>PNG · JPG · WEBP · AVIF — hand sign against a plain background</p>",
             unsafe_allow_html=True,
         )
-        _render_sidebar(model_label)
+        _render_sidebar(model_label, best_acc)
         return
 
-    # ── Image columns ──────────────────────────────────────────────────
-    col_img, col_pre, col_res = st.columns([2, 2, 3])
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    with col_img:
-        st.markdown("<div class='section-label'>Original</div>",
-                    unsafe_allow_html=True)
+    # ── Three-column result layout ────────────────────────────────────────
+    col_orig, col_pre, col_res = st.columns([2, 2, 3], gap="medium")
+
+    with col_orig:
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
+        st.markdown("<div class='panel-label'>📷 &nbsp;Original</div>", unsafe_allow_html=True)
         st.image(Image.open(uploaded), use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     uploaded.seek(0)
     try:
@@ -382,86 +636,48 @@ def main() -> None:
         st.stop()
 
     with col_pre:
-        st.markdown("<div class='section-label'>Preprocessed — 28 x 28</div>",
-                    unsafe_allow_html=True)
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
+        st.markdown("<div class='panel-label'>🔬 &nbsp;Preprocessed — 28 × 28</div>", unsafe_allow_html=True)
         st.image(img_28, clamp=True, use_container_width=True)
-        st.markdown("<div class='img-caption'>Greyscale · Auto-cropped · Normalised</div>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            "<div class='panel-caption'>Greyscale · Auto-cropped · Normalised</div>",
+            unsafe_allow_html=True,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
     letter, confidence, probs = predict(model, tensor, device)
-    bar_width = int(confidence * 100)
+    bar_w = int(confidence * 100)
 
     with col_res:
-        st.markdown("<div class='section-label'>Prediction</div>",
-                    unsafe_allow_html=True)
         st.markdown(
-            f"<div class='result-letter'>{letter}</div>"
-            f"<div class='result-meta'>{confidence * 100:.2f}% confidence</div>"
-            f"<div class='confidence-bar-bg'>"
-            f"  <div class='confidence-bar-fill' style='width:{bar_width}%'></div>"
-            f"</div>",
+            f"""
+            <div class="result-wrapper">
+                <div class="result-label">Predicted Letter</div>
+                <div class="result-letter">{letter}</div>
+                <div class="confidence-pct">{confidence*100:.1f}%</div>
+                <div class="confidence-label">Confidence</div>
+                <div class="conf-bar-bg">
+                    <div class="conf-bar-fill" style="width:{bar_w}%"></div>
+                </div>
+            </div>
+            """,
             unsafe_allow_html=True,
         )
 
         st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<div class='section-header'>Top 5 Predictions</div>", unsafe_allow_html=True)
+        _top5_bars(probs)
 
-        # Top-5 table
-        st.markdown("<div class='section-label'>Top 5</div>", unsafe_allow_html=True)
-        top5 = sorted(range(len(probs)), key=lambda i: probs[i], reverse=True)[:5]
-        top5_df = pd.DataFrame({
-            "Letter": [LABEL_TO_LETTER[i] for i in top5],
-            "Probability": [f"{probs[i]*100:.2f}%" for i in top5],
-        })
-        st.dataframe(top5_df, hide_index=True, use_container_width=True)
-
-    # ── Full distribution (collapsed) ─────────────────────────────────
-    with st.expander("Full probability distribution"):
+    # ── Full distribution ────────────────────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    with st.expander("View full probability distribution"):
         all_df = pd.DataFrame({
             "Letter": ALL_LETTERS,
             "Probability (%)": [round(p * 100, 3) for p in probs],
-        }).sort_values("Probability (%)", ascending=False)
+        }).sort_values("Probability (%)", ascending=False).reset_index(drop=True)
         st.dataframe(all_df, hide_index=True, use_container_width=True)
 
-    _render_sidebar(model_label)
-
-
-def _render_sidebar(model_label: str) -> None:
-    with st.sidebar:
-        st.markdown(
-            "<p style='font-size:0.65rem; letter-spacing:0.1em; "
-            "text-transform:uppercase; color:#444; margin-bottom:1rem;'>About</p>",
-            unsafe_allow_html=True,
-        )
-        rows = [
-            ("Dataset",    "Sign Language MNIST"),
-            ("Model",      model_label or "—"),
-            ("Classes",    "24  (A-Y, excl. J & Z)"),
-            ("Resolution", "28 x 28 greyscale"),
-            ("Framework",  "PyTorch"),
-        ]
-        for key, val in rows:
-            st.markdown(
-                f"<p style='font-size:0.75rem; margin:0.25rem 0;'>"
-                f"<strong style='color:#555 !important;'>{key}</strong>"
-                f"<span style='color:#444 !important;'> — {val}</span></p>",
-                unsafe_allow_html=True,
-            )
-
-        st.markdown(
-            "<hr style='border-color:#1f1f1f; margin:1.2rem 0;'>",
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            "<p style='font-size:0.65rem; letter-spacing:0.1em; "
-            "text-transform:uppercase; color:#444; margin-bottom:0.8rem;'>Label Map</p>",
-            unsafe_allow_html=True,
-        )
-        for idx, letter in LABEL_TO_LETTER.items():
-            st.markdown(
-                f"<p style='font-size:0.72rem; margin:0.15rem 0; color:#3a3a3a !important;'>"
-                f"{letter} &rarr; class {idx}</p>",
-                unsafe_allow_html=True,
-            )
+    _render_sidebar(model_label, best_acc)
 
 
 if __name__ == "__main__":
