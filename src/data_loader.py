@@ -56,7 +56,25 @@ class SignLanguageData:
 
 
 def _load_csv(path: str) -> Tuple[np.ndarray, np.ndarray]:
-    """Read a Sign Language MNIST CSV and return (labels, pixels_normalised)."""
+    """
+    Read a Sign Language MNIST CSV and return (labels, pixels_normalised).
+    
+    This internal helper reads the CSV file, validates its structure, remaps
+    raw alphabet-position labels to contiguous indices (0-23), and normalises
+    pixel values from [0, 255] to [0, 1].
+    
+    Args:
+        path: Path to the CSV file (e.g., 'data/sign_mnist_train.csv').
+    
+    Returns:
+        Tuple of (remapped_labels, normalised_pixels) where:
+            - remapped_labels: (N,) int64 array with values in [0, 23]
+            - normalised_pixels: (N, 784) float32 array with values in [0, 1]
+    
+    Raises:
+        FileNotFoundError: If CSV does not exist at the given path.
+        ValueError: If CSV lacks 'label' column or has unexpected pixel count.
+    """
     if not os.path.exists(path):
         raise FileNotFoundError(
             f"Dataset not found at '{path}'.\n"
@@ -138,7 +156,18 @@ def get_torch_dataloaders(
     Wrap tensors in TensorDatasets and return (train_loader, test_loader).
 
     The input tensors are flattened from (N,1,28,28) to (N,784) here so the
-    MLP receives 1-D feature vectors directly from the loader.
+    MLP receives 1-D feature vectors directly from the loader. For CNN-based
+    models, use the raw 4-D tensors directly without flattening.
+    
+    Args:
+        data: SignLanguageData instance containing train/test tensors.
+        batch_size: Batch size for DataLoaders (default: 64).
+    
+    Returns:
+        Tuple of (train_loader, test_loader) where:
+            - train_loader: Shuffled DataLoader for training.
+            - test_loader: Non-shuffled DataLoader for validation/testing.
+            Both yield batches of (flattened_images, labels).
     """
     X_tr = data.X_train_tensor.view(data.X_train_tensor.size(0), -1)
     X_te = data.X_test_tensor.view(data.X_test_tensor.size(0), -1)

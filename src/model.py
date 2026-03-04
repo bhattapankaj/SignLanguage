@@ -53,7 +53,13 @@ class MLP(nn.Module):
         self._init_weights()
 
     def _init_weights(self) -> None:
-        """Kaiming Normal init for Linear layers; constant init for BatchNorm."""
+        """
+        Initialise network weights using best practices.
+        
+        Uses Kaiming Normal initialisation for Linear layers (appropriate for ReLU)
+        and constant initialisation for BatchNorm bias and weight. This helps with
+        training stability and convergence speed.
+        """
         for module in self.modules():
             if isinstance(module, nn.Linear):
                 nn.init.kaiming_normal_(module.weight, nonlinearity="relu")
@@ -65,13 +71,15 @@ class MLP(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Forward pass.
+        Forward pass through the MLP.
 
         Args:
             x: (batch_size, input_size) float tensor.
+               Typically (batch_size, 784) for flattened 28x28 images.
 
         Returns:
             Raw logits of shape (batch_size, num_classes).
+            These logits are used with CrossEntropyLoss for training.
         """
         return self.network(x)
 
@@ -136,6 +144,16 @@ class ConvNet(nn.Module):
         self._init_weights()
 
     def _init_weights(self) -> None:
+        """
+        Initialise all weights and biases using principled methods.
+        
+        - Conv2d and Linear layers: Kaiming Normal (appropriate for ReLU)
+        - BatchNorm layers: Ones for weight, zeros for bias
+        - Other biases: Zeros
+        
+        This initialisation strategy helps prevent vanishing/exploding gradients
+        and accelerates convergence during training.
+        """
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, nonlinearity="relu")
@@ -151,10 +169,14 @@ class ConvNet(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
+        Forward pass through the ConvNet.
+        
         Args:
-            x: (N, 1, 28, 28) — 4-D image tensor.
+            x: (N, 1, 28, 28) — 4-D image tensor with pixel values in [0, 1].
+        
         Returns:
             Logits of shape (N, num_classes).
+            These raw logits are passed to CrossEntropyLoss for training.
         """
         x = self.features(x)
         x = x.view(x.size(0), -1)   # flatten (N, 128)
@@ -162,7 +184,16 @@ class ConvNet(nn.Module):
 
 
 def get_device() -> torch.device:
-    """Return the best available device: CUDA > MPS (Apple Silicon) > CPU."""
+    """
+    Return the best available device: CUDA > MPS (Apple Silicon) > CPU.
+    
+    This helper automatically selects the fastest compute device available
+    on the current system. GPU acceleration (CUDA/MPS) provides significant
+    speedup for training, while CPU is always available as fallback.
+    
+    Returns:
+        torch.device: The selected device ('cuda', 'mps', or 'cpu').
+    """
     if torch.cuda.is_available():
         device = torch.device("cuda")
     elif torch.backends.mps.is_available():
@@ -174,5 +205,17 @@ def get_device() -> torch.device:
 
 
 def count_parameters(model: nn.Module) -> int:
-    """Return the total number of trainable parameters."""
+    """
+    Return the total number of trainable parameters in a model.
+    
+    This counts only parameters with requires_grad=True, so frozen layers
+    or buffers are excluded. Useful for model complexity analysis and
+    reporting architecture details.
+    
+    Args:
+        model: A PyTorch nn.Module instance.
+    
+    Returns:
+        int: Total count of trainable parameters.
+    """
     return sum(p.numel() for p in model.parameters() if p.requires_grad)

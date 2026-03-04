@@ -43,7 +43,19 @@ def plot_confusion_matrix(
     y_pred: np.ndarray,
     save_path: str,
 ) -> None:
-    """Save a labelled confusion-matrix heatmap as a PNG."""
+    """
+    Save a labelled confusion-matrix heatmap as a PNG.
+    
+    Generates a normalised (row-wise) confusion matrix heatmap showing
+    classification performance per sign language letter. Rows represent
+    true labels, columns represent predicted labels. Values are normalised
+    to [0, 1] for better interpretability.
+    
+    Args:
+        y_true: True class labels (1-D array).
+        y_pred: Predicted class labels (1-D array).
+        save_path: Output file path for the PNG image.
+    """
     labels = sorted(set(y_true) | set(y_pred))
     letter_labels = [LABEL_TO_LETTER[i] for i in labels]
 

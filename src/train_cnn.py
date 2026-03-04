@@ -40,7 +40,19 @@ def parse_args() -> argparse.Namespace:
 
 
 def get_cnn_dataloaders(data, batch_size: int) -> Tuple[DataLoader, DataLoader]:
-    """Return loaders that yield (N,1,28,28) tensors — keeping spatial dims for CNN."""
+    """
+    Return loaders that yield (N,1,28,28) tensors — keeping spatial dims for CNN.
+    
+    Unlike the MLP dataloader which flattens to (N, 784), this preserves the
+    2-D spatial structure needed for convolutional filters to learn local patterns.
+    
+    Args:
+        data: SignLanguageData instance with X_train_tensor, etc.
+        batch_size: Batch size for both loaders.
+    
+    Returns:
+        Tuple of (train_loader, test_loader) with 4-D tensors.
+    """
     train_ds = TensorDataset(data.X_train_tensor, data.y_train_tensor)
     test_ds = TensorDataset(data.X_test_tensor, data.y_test_tensor)
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=0)
@@ -55,6 +67,23 @@ def run_epoch(
     device: torch.device,
     optimiser: Optional[optim.Optimizer] = None,
 ) -> Tuple[float, float]:
+    """
+    Run a single epoch (training or evaluation).
+    
+    Processes all batches in *loader*, computing logits, loss, and accuracy.
+    If optimiser is provided, performs backward passes and weight updates (training).
+    Otherwise, runs in eval mode without gradient computation (validation/testing).
+    
+    Args:
+        model: PyTorch model to train or evaluate.
+        loader: DataLoader yielding (X_batch, y_batch) tuples.
+        criterion: Loss function (e.g., CrossEntropyLoss).
+        device: Device to run on ('cuda', 'mps', or 'cpu').
+        optimiser: Optimiser for weight updates. If None, runs in eval mode.
+    
+    Returns:
+        Tuple of (avg_loss, accuracy) for the epoch.
+    """
     training = optimiser is not None
     model.train() if training else model.eval()
 
