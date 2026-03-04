@@ -7,6 +7,8 @@ Automatically loads the best available model:
 
 Run:
     streamlit run app.py
+
+Last updated: March 4, 2026
 """
 
 import io
