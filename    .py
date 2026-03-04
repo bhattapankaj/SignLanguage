@@ -1,14 +1,3 @@
-"""
-Streamlit deployment app for Sign Language translation.
-
-Automatically loads the best available model:
-  1. cnn_model.pth  (ConvNet — preferred, higher accuracy)
-  2. mlp_model.pth  (MLP fallback)
-
-Run:
-    streamlit run app.py
-"""
-
 import os
 import sys
 
