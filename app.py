@@ -34,7 +34,7 @@ MLP_PATH = os.path.join("models", "mlp_model.pth")
 ALL_LETTERS = list(LABEL_TO_LETTER.values())
 
 
-# ─────────────────────────────────────────────────────────────── CSS
+# ─────────────────────────────────────────────────────────── CSS
 def inject_css() -> None:
     st.markdown("""
     <style>
